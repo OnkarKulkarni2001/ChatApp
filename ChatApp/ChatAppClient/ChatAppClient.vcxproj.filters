@@ -21,9 +21,15 @@
     <ClInclude Include="structs.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="cClient.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

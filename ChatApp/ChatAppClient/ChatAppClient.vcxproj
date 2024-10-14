@@ -128,10 +128,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="cBuffer.h" />
+    <ClInclude Include="cClient.h" />
     <ClInclude Include="structs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cBuffer.cpp" />
+    <ClCompile Include="cClient.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -15,6 +15,4 @@ struct sMessage
 	std::string messageString;
 };
 
-struct addrinfo* sInfo = nullptr;
-
 struct addrinfo sHints;
