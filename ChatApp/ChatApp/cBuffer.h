@@ -14,12 +14,12 @@ public:
 
 	void GrowBuffer(int additionalBytes);
 
-	uint32_t WriteUInt32_LE(uint32_t value);
-	uint32_t ReadUInt32_LE(uint32_t value);
+	void WriteUInt32_LE(uint32_t value);
+	uint32_t ReadUInt32_LE();
 
-	uint16_t WriteUShort16_LE(uint16_t value);
-	uint16_t ReadUShort16_LE(uint16_t value);
+	void WriteUShort16_LE(uint16_t value);
+	uint16_t ReadUShort16_LE();
 
-	std::string WriteString(const std::string& stringToWrite);
+	void WriteString(const std::string& stringToWrite);
 	std::string ReadString(uint32_t stringLength);
 };

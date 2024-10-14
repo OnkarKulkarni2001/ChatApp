@@ -17,7 +17,7 @@ void cBuffer::GrowBuffer(int additionalBytes)
 	}
 }
 
-uint32_t cBuffer::WriteUInt32_LE(uint32_t value)					// Serializing/Writing the 32 bit integer by 
+void cBuffer::WriteUInt32_LE(uint32_t value)					// Serializing/Writing the 32 bit integer by 
 {	
 	GrowBuffer(4);													// breaking it into individual bytes and stored 
 	m_BufferData[m_WriteIndex++] = value;							// in LE order in buffer
@@ -26,32 +26,34 @@ uint32_t cBuffer::WriteUInt32_LE(uint32_t value)					// Serializing/Writing the 
 	m_BufferData[m_WriteIndex++] = value >> 24;
 }
 
-uint32_t cBuffer::ReadUInt32_LE(uint32_t value)						// Deserializing/Reading the individual bytes by
+uint32_t cBuffer::ReadUInt32_LE()									// Deserializing/Reading the individual bytes by
 {																	// reconstructing it into original 32 bit integer
-	m_BufferData[m_ReadIndex++] = value;							// in LE order in buffer
-	m_BufferData[m_ReadIndex++] = value << 8;
-	m_BufferData[m_ReadIndex++] = value << 16;
-	m_BufferData[m_ReadIndex++] = value << 24;
+	uint32_t value = 0;
+	value |= m_BufferData[m_ReadIndex++];							// in LE order in buffer
+	value |= m_BufferData[m_ReadIndex++] << 8;
+	value |= m_BufferData[m_ReadIndex++] << 16;
+	value |= m_BufferData[m_ReadIndex++] << 24;
+
+	return value;
 }
 
-uint16_t cBuffer::WriteUShort16_LE(uint16_t value)					// Serializing/Writing the 16 bit short by 
+void cBuffer::WriteUShort16_LE(uint16_t value)					// Serializing/Writing the 16 bit short by 
 {				
-	GrowBuffer(4);													// breaking it into individual bytes and stored 
+	GrowBuffer(2);													// breaking it into individual bytes and stored 
 	m_BufferData[m_WriteIndex++] = value;							// in LE order in buffer
 	m_BufferData[m_WriteIndex++] = value >> 8;
-	m_BufferData[m_WriteIndex++] = value >> 16;
-	m_BufferData[m_WriteIndex++] = value >> 24;
 }
 
-uint16_t cBuffer::ReadUShort16_LE(uint16_t value)					// Deserializing/Reading the individual bytes by
+uint16_t cBuffer::ReadUShort16_LE()									// Deserializing/Reading the individual bytes by
 {																	// reconstructing it into original 16 bit short
-	m_BufferData[m_ReadIndex++] = value;							// in LE order in buffer
-	m_BufferData[m_ReadIndex++] = value << 8;
-	m_BufferData[m_ReadIndex++] = value << 16;
-	m_BufferData[m_ReadIndex++] = value << 24;
+	uint16_t value = 0;
+	value |= m_BufferData[m_ReadIndex++];							// in LE order in buffer
+	value |= m_BufferData[m_ReadIndex++] << 8;
+
+	return value;
 }
 
-std::string cBuffer::WriteString(const std::string& stringToWrite)	// Writes a given string by retrieving length of 	
+void cBuffer::WriteString(const std::string& stringToWrite)	// Writes a given string by retrieving length of 	
 {	
 	GrowBuffer(4);													// given string after that copying value of string 
 	int stringLength = stringToWrite.length();						// letter by letter while incrementing write index
