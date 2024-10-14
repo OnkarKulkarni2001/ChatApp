@@ -50,12 +50,22 @@ int main(int arg, char* argv[])
 
 	if (listenSocket == INVALID_SOCKET)
 	{
-		std::cout << "Socket failed with error: " << WSAGetLastError << std::endl;
+		std::cout << "Socket failed with error: " << WSAGetLastError() << std::endl;
 		freeaddrinfo(sInfo);
 		WSACleanup();
 		return 1;
 	}
 	std::cout << "Socket created successfully!" << std::endl;
+
+	u_long mode = 1;
+	result = ioctlsocket(listenSocket, FIONBIO, &mode);
+	if (result != NO_ERROR)
+	{
+		std::cout << "Failed to set non-blocking mode: " << WSAGetLastError() << std::endl;
+		closesocket(listenSocket);
+		WSACleanup();
+		return 1;
+	}
 
 	// Bind the listening socket!
 	result = bind(listenSocket, sInfo->ai_addr, (int)sInfo->ai_addrlen);
@@ -126,12 +136,19 @@ int main(int arg, char* argv[])
 				int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
 				if (result == SOCKET_ERROR)
 				{
-					std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
-					closesocket(socket);
-					FD_CLR(socket, &activeSockets);
-					vConnections.erase(vConnections.begin() + i);
-					i--;
-					continue;
+					if (WSAGetLastError() == WSAEWOULDBLOCK)
+					{
+						continue;
+					}
+					else
+					{
+						std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+						closesocket(socket);
+						FD_CLR(socket, &activeSockets);
+						vConnections.erase(vConnections.begin() + i);
+						i--;
+						continue;
+					}
 				}
 				if (result == 0)
 				{
@@ -159,7 +176,8 @@ int main(int arg, char* argv[])
 					sMessage receivedMessage;
 					receivedMessage.messageString = "Server received message from " + (int)socket;
 					receivedMessage.messageLength = receivedMessage.messageString.length();
-					receivedMessage.packetHeader.messageType =
+					receivedMessage.packetHeader.messageType = 1;
+					receivedMessage.packetHeader.packetSize =
 						receivedMessage.messageString.length()
 						+ sizeof(receivedMessage.messageLength)
 						+ sizeof(receivedMessage.packetHeader.messageType)
@@ -177,7 +195,7 @@ int main(int arg, char* argv[])
 						SOCKET outSocket = vConnections[j];
 						if (outSocket != listenSocket)
 						{
-							send(outSocket, (const char*)(&buffer.m_BufferData[0]), receivedMessage.packetHeader.packetSize, 0);
+							send(outSocket, (const char*)(&bufferSend.m_BufferData[0]), receivedMessage.packetHeader.packetSize, 0);
 						}
 					}
 				}
@@ -198,10 +216,19 @@ int main(int arg, char* argv[])
 				}
 				else
 				{
-					vConnections.push_back(newConnection);
-					FD_SET(newConnection, &vConnections);
-					FD_CLR(listenSocket, &socketsReadyForReading);
-					std::cout << "Client connected with socket: " << (int)newConnection << std::endl;
+					result = ioctlsocket(newConnection, FIONBIO, &mode);
+					if (result != NO_ERROR)
+					{
+						std::cout << "Failed to set non-blocking mode for client: " << WSAGetLastError() << std::endl;
+						closesocket(newConnection);
+					}
+					else
+					{
+						vConnections.push_back(newConnection);
+						//FD_SET(newConnection, &vConnections);
+						//FD_CLR(listenSocket, &socketsReadyForReading);
+						std::cout << "Client connected with socket: " << (int)newConnection << std::endl;
+					}
 				}
 			}
 		}
@@ -215,6 +242,7 @@ int main(int arg, char* argv[])
 		closesocket(vConnections[i]);
 	}
 
+	freeaddrinfo(sInfo);
 	WSACleanup();
 
 	return 0;

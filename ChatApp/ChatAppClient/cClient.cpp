@@ -66,6 +66,11 @@ int cClient::SendMessageToServer(SOCKET socket)
 	buffer.WriteString(chatMessage.messageString);
 
 	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), chatMessage.packetHeader.packetSize, 0);
+	if (result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+		return SOCKET_ERROR;
+	}
 	return result;
 }
 
@@ -81,7 +86,7 @@ int main(int arg, char* argv[])
 	}
 
 	struct addrinfo* sInfo = nullptr;
-	ZeroMemory(&sHints, sizeof(&sHints));
+	ZeroMemory(&sHints, sizeof(sHints));
 	sHints.ai_family = AF_INET;
 	sHints.ai_socktype = SOCK_STREAM;
 	sHints.ai_protocol = IPPROTO_TCP;
@@ -108,7 +113,7 @@ int main(int arg, char* argv[])
 	
 	// Connecting the serverSocket!
 	result = connect(serverSocket, sInfo->ai_addr, (int)sInfo->ai_addrlen);
-	if (serverSocket == INVALID_SOCKET)
+	if (serverSocket == SOCKET_ERROR)
 	{
 		std::cout << "Connection failed with an error: " << WSAGetLastError() << std::endl;
 		closesocket(serverSocket);
@@ -118,10 +123,6 @@ int main(int arg, char* argv[])
 	}
 
 	cClient client;
-
-	std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
-	std::thread sendThread(&cClient::SendMessageToServer, &client, serverSocket);
-
 	result = client.SendMessageToServer(serverSocket);
 
 	if (result == SOCKET_ERROR)
@@ -133,8 +134,16 @@ int main(int arg, char* argv[])
 		return 1;
 	}
 
-	freeaddrinfo(sInfo);
+	std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
+	std::thread sendThread(&cClient::SendMessageToServer, &client, serverSocket);
+
+	receiveThread.join();  // Make sure threads finish before cleanup
+	sendThread.join();
+
+	system("Pause"); // Force the user to press enter to continue;
+	
 	closesocket(serverSocket);
+	freeaddrinfo(sInfo);
 	WSACleanup();
 
 	return 0;
