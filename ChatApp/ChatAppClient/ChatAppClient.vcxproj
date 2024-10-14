@@ -21,10 +21,9 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{503662d2-8ac7-488b-b9ad-776a8c0661d4}</ProjectGuid>
-    <RootNamespace>ChatApp</RootNamespace>
+    <ProjectGuid>{b2358558-db78-4acd-a802-2910db7b2daf}</ProjectGuid>
+    <RootNamespace>ChatAppClient</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>ChatAppServer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -133,7 +132,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cBuffer.cpp" />
-    <ClCompile Include="server.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
