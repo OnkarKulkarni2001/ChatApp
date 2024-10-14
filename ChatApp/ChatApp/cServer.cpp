@@ -18,6 +18,7 @@
 
 std::vector<SOCKET> vConnections;			// vector of active connections
 
+
 int main(int arg, char* argv[])
 {
 	WSADATA wsaData;
@@ -116,7 +117,7 @@ int main(int arg, char* argv[])
 
 		if (count == 0)
 		{
-			std::cout << "No sockets are ready for reading." << std::endl;
+			//std::cout << "No sockets are ready for reading." << std::endl;
 			continue;
 		}
 		if (count == SOCKET_ERROR)
@@ -168,10 +169,10 @@ int main(int arg, char* argv[])
 					uint32_t messageLength = buffer.ReadUInt32_LE();
 					std::string messageString = buffer.ReadString(messageLength);
 
-					std::cout << "Packet Size: " << packetSize
-						<< "Message Type: " << messageType
-						<< "Message Length: " << messageLength
-						<< "Message: " << messageString.c_str();
+					std::cout << "Packet Size: " << packetSize << "\n"
+						<< "Message Type: " << messageType << "\n"
+						<< "Message Length: " << messageLength << "\n"
+						<< "Message: " << messageString.c_str() << "\n";
 
 					sMessage receivedMessage;
 					receivedMessage.messageString = "Server received message from " + (int)socket;

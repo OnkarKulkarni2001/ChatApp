@@ -26,7 +26,7 @@
     <ClCompile Include="cBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="server.cpp">
+    <ClCompile Include="cServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

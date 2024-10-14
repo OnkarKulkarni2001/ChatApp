@@ -14,5 +14,3 @@ struct sMessage
 	uint32_t messageLength;
 	std::string messageString;
 };
-
-struct addrinfo sHints;

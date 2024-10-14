@@ -133,7 +133,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cBuffer.cpp" />
-    <ClCompile Include="server.cpp" />
+    <ClCompile Include="cServer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
