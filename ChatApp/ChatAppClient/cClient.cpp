@@ -44,7 +44,8 @@ void cClient::ReceiveMessage(SOCKET socket)
 int cClient::SendMessageToServer(SOCKET socket)
 {
 	sMessage chatMessage;
-	chatMessage.messageString = "Voila you are the best!";
+	std::cout << "Type a message: ";
+	std::getline(std::cin, chatMessage.messageString);
 	chatMessage.messageLength = chatMessage.messageString.length();
 	chatMessage.packetHeader.messageType = 1;
 	chatMessage.packetHeader.packetSize =

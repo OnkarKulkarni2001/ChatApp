@@ -169,9 +169,9 @@ int main(int arg, char* argv[])
 					uint32_t messageLength = buffer.ReadUInt32_LE();
 					std::string messageString = buffer.ReadString(messageLength);
 
-					std::cout << "Packet Size: " << packetSize << "\n"
+					std::cout /*<< "Packet Size: " << packetSize << "\n"
 						<< "Message Type: " << messageType << "\n"
-						<< "Message Length: " << messageLength << "\n"
+						<< "Message Length: " << messageLength << "\n"*/
 						<< "Message: " << messageString.c_str() << "\n";
 
 					sMessage receivedMessage;

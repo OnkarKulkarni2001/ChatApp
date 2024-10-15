@@ -60,20 +60,24 @@ int main(int arg, char* argv[])
 	}
 
 	cClient client;
-	result = client.SendMessageToServer(serverSocket);
-
-	if (result == SOCKET_ERROR)
+	while (true)
 	{
-		std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
-		closesocket(serverSocket);
-		freeaddrinfo(sInfo);
-		WSACleanup();
-		return 1;
+		result = client.SendMessageToServer(serverSocket);
+		if (result == SOCKET_ERROR)
+		{
+			std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
+			closesocket(serverSocket);
+			freeaddrinfo(sInfo);
+			WSACleanup();
+			return 1;
+		}
 	}
 
 	std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
+	std::thread sendThread(&cClient::SendMessageToServer, &client, serverSocket);
 
 	receiveThread.join();  // Make sure threads finish before cleanup
+	sendThread.join();
 
 	system("Pause"); // Force the user to press enter to continue;
 
