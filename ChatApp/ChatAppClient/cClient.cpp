@@ -49,7 +49,7 @@ int cClient::SendMessageToServer(SOCKET socket)
 	chatMessage.messageLength = chatMessage.messageString.length();
 	chatMessage.packetHeader.messageType = 1;
 	chatMessage.packetHeader.packetSize =
-		chatMessage.messageString.length()
+		+ chatMessage.messageString.length()
 		+ sizeof(chatMessage.messageLength)
 		+ sizeof(chatMessage.packetHeader.messageType)
 		+ sizeof(chatMessage.packetHeader.packetSize);
@@ -63,6 +63,35 @@ int cClient::SendMessageToServer(SOCKET socket)
 	buffer.WriteString(chatMessage.messageString);
 
 	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), chatMessage.packetHeader.packetSize, 0);
+	if (result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+		return SOCKET_ERROR;
+	}
+	return result;
+}
+
+int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
+{
+	sMessage passClientName;
+	passClientName.messageString = clientName;
+	passClientName.messageLength = passClientName.messageString.length();
+	passClientName.packetHeader.messageType = 2;
+	passClientName.packetHeader.packetSize =
+		+passClientName.messageString.length()
+		+ sizeof(passClientName.messageLength)
+		+ sizeof(passClientName.packetHeader.messageType)
+		+ sizeof(passClientName.packetHeader.packetSize);
+
+	uint32_t bufSize = 512;
+	cBuffer buffer(bufSize);
+
+	buffer.WriteUShort16_LE(passClientName.packetHeader.packetSize);
+	buffer.WriteUShort16_LE(passClientName.packetHeader.messageType);
+	buffer.WriteUInt32_LE(passClientName.messageLength);
+	buffer.WriteString(passClientName.messageString);
+
+	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), passClientName.packetHeader.packetSize, 0);
 	if (result == SOCKET_ERROR)
 	{
 		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;

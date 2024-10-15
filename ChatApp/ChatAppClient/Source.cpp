@@ -60,6 +60,19 @@ int main(int arg, char* argv[])
 	}
 
 	cClient client;
+	std::cout << "Enter your name: ";
+	std::getline(std::cin, client.clientName);
+
+	result = client.SendClientNameToServer(serverSocket, client.clientName);
+	if (result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
+		closesocket(serverSocket);
+		freeaddrinfo(sInfo);
+		WSACleanup();
+		return 1;
+	}
+	
 	while (true)
 	{
 		result = client.SendMessageToServer(serverSocket);
@@ -73,11 +86,13 @@ int main(int arg, char* argv[])
 		}
 	}
 
+	//std::thread sendNameThread(&cClient::SendClientNameToServer, &client, serverSocket);
 	std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
-	std::thread sendThread(&cClient::SendMessageToServer, &client, serverSocket);
+	//std::thread sendThread(&cClient::SendMessageToServer, &client, serverSocket);
 
 	receiveThread.join();  // Make sure threads finish before cleanup
-	sendThread.join();
+	//sendNameThread.join();
+	//sendThread.join();
 
 	system("Pause"); // Force the user to press enter to continue;
 

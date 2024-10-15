@@ -11,13 +11,14 @@
 #include <stdio.h>
 #include "structs.h"
 #include <iostream>
+#include <map>
 
 #pragma comment(lib, "Ws2_32.lib")			// linking Ws2_32.lib library
 
 #define DEFAULT_PORT "8412"					// Setting default port
 
 std::vector<SOCKET> vConnections;			// vector of active connections
-
+std::map<SOCKET, std::string> ConnectionWithName;
 
 int main(int arg, char* argv[])
 {
@@ -103,6 +104,7 @@ int main(int arg, char* argv[])
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
 
+
 	while (true)
 	{
 		FD_ZERO(&socketsReadyForReading);
@@ -129,6 +131,7 @@ int main(int arg, char* argv[])
 		for (int i = 0; i < vConnections.size(); i++)
 		{
 			SOCKET socket = vConnections[i];
+				
 			if (FD_ISSET(socket, &socketsReadyForReading))
 			{
 				const int bufSize = 512;
@@ -164,42 +167,20 @@ int main(int arg, char* argv[])
 				uint16_t packetSize = buffer.ReadUShort16_LE();
 				uint16_t messageType = buffer.ReadUShort16_LE();
 
+				if (messageType == 2)
+				{
+					uint32_t clientNameLength = buffer.ReadUInt32_LE();
+					std::string clientNameString = buffer.ReadString(clientNameLength);
+					ConnectionWithName[socket] = clientNameString;
+					std::cout << ConnectionWithName[socket] << " has joined room." << std::endl;
+				}
 				if (messageType == 1)
 				{
 					uint32_t messageLength = buffer.ReadUInt32_LE();
 					std::string messageString = buffer.ReadString(messageLength);
-
-					std::cout /*<< "Packet Size: " << packetSize << "\n"
-						<< "Message Type: " << messageType << "\n"
-						<< "Message Length: " << messageLength << "\n"*/
-						<< "Message: " << messageString.c_str() << "\n";
-
-					sMessage receivedMessage;
-					receivedMessage.messageString = "Server received message from " + (int)socket;
-					receivedMessage.messageLength = receivedMessage.messageString.length();
-					receivedMessage.packetHeader.messageType = 1;
-					receivedMessage.packetHeader.packetSize =
-						receivedMessage.messageString.length()
-						+ sizeof(receivedMessage.messageLength)
-						+ sizeof(receivedMessage.packetHeader.messageType)
-						+ sizeof(receivedMessage.packetHeader.packetSize);
-
-					cBuffer bufferSend(bufSize);
-
-					bufferSend.WriteUShort16_LE(receivedMessage.packetHeader.packetSize);
-					bufferSend.WriteUShort16_LE(receivedMessage.packetHeader.messageType);
-					bufferSend.WriteUInt32_LE(receivedMessage.messageLength);
-					bufferSend.WriteString(receivedMessage.messageString);
-
-					for (int j = 0; j < vConnections.size(); j++)
-					{
-						SOCKET outSocket = vConnections[j];
-						if (outSocket != listenSocket)
-						{
-							send(outSocket, (const char*)(&bufferSend.m_BufferData[0]), receivedMessage.packetHeader.packetSize, 0);
-						}
-					}
+					std::cout << ConnectionWithName[socket] << ": " << messageString.c_str() << "\n";
 				}
+
 
 				FD_CLR(socket, &socketsReadyForReading);
 				count--;
@@ -211,6 +192,9 @@ int main(int arg, char* argv[])
 			if (FD_ISSET(listenSocket, &socketsReadyForReading))
 			{
 				SOCKET newConnection = accept(listenSocket, NULL, NULL);
+				sClient client;
+				ConnectionWithName.insert(std::make_pair(newConnection, client.clientName));
+
 				if (newConnection == INVALID_SOCKET)
 				{
 					std::cout << "Accept failed with error: " << WSAGetLastError();
@@ -226,9 +210,7 @@ int main(int arg, char* argv[])
 					else
 					{
 						vConnections.push_back(newConnection);
-						//FD_SET(newConnection, &vConnections);
-						//FD_CLR(listenSocket, &socketsReadyForReading);
-						std::cout << "Client connected with socket: " << (int)newConnection << std::endl;
+						//std::cout << "Client connected with socket: " << (int)newConnection << std::endl;
 					}
 				}
 			}
