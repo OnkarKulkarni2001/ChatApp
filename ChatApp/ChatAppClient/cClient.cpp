@@ -6,56 +6,8 @@
 #include "cBuffer.h"
 #include <iostream>
 #include <map>
+#include <thread>
 #pragma comment(lib, "Ws2_32.lib")
-
-std::map<SOCKET, std::string> ConnectionWithName;
-
-//void cClient::ReceiveMessage(SOCKET socket)
-//{
-//	uint32_t bufSize = 512;
-//	cBuffer buffer(bufSize);
-//
-//	while (true)
-//	{
-//		int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
-//		if (result > 0)
-//		{
-//			uint16_t packetSize = buffer.ReadUShort16_LE();
-//			uint16_t messageType = buffer.ReadUShort16_LE();
-//
-//			/*if (messageType == 1)
-//			{
-//				uint32_t messageLength = buffer.ReadUInt32_LE();
-//				std::string messageString = buffer.ReadString(messageLength);
-//
-//				std::cout << "Message: " << messageString << std::endl;
-//			}*/
-//			if (messageType == 2)
-//			{
-//				uint32_t clientNameLength = buffer.ReadUInt32_LE();
-//				std::string clientNameString = buffer.ReadString(clientNameLength);
-//				ConnectionWithName[socket] = clientNameString;
-//				std::cout << ConnectionWithName[socket] << " has joined room." << std::endl;
-//			}
-//			if (messageType == 1)
-//			{
-//				uint32_t messageLength = buffer.ReadUInt32_LE();
-//				std::string messageString = buffer.ReadString(messageLength);
-//				std::cout << ConnectionWithName[socket] << ": " << messageString.c_str() << "\n";
-//			}
-//		}
-//		else if (result == 0)
-//		{
-//			std::cout << "Server closed the connection" << std::endl;
-//			break;
-//		}
-//		else
-//		{
-//			std::cout << "recv failed with an error: " << WSAGetLastError() << std::endl;
-//			break;
-//		}
-//	}
-//}
 
 int cClient::SendMessageToServer(SOCKET socket)
 {
@@ -115,3 +67,109 @@ int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
 	}
 	return result;
 }
+
+void cClient::ReceiveMessage(SOCKET socket)
+{
+	uint32_t bufSize = 512;
+	cBuffer buffer(bufSize);
+
+	while (true)
+	{
+		int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
+		if (result == 0)
+		{
+			std::cout << "Server closed the connection" << std::endl;
+			break;
+		}
+		else if (result == SOCKET_ERROR)
+		{
+			std::cout << "recv failed with an error: " << WSAGetLastError() << std::endl;
+			break;
+		}
+		uint16_t packetSize = buffer.ReadUInt32_LE();
+		uint16_t messageType = buffer.ReadUInt32_LE();
+
+		if (messageType == 1)
+		{
+			uint32_t messageLength = buffer.ReadUInt32_LE();
+			std::string messageString = buffer.ReadString(messageLength);
+
+			std::cout << "Message: " << messageString << std::endl;
+		}
+	}
+
+	//// Process received data
+	//const int bufSize = 512;
+	//cBuffer buffer(bufSize);
+	//uint16_t packetSize = buffer.ReadUShort16_LE();
+	//uint16_t messageType = buffer.ReadUShort16_LE();
+
+	//if (messageType == 2) {
+	//	uint32_t clientNameLength = buffer.ReadUInt32_LE();
+	//	std::string clientNameString = buffer.ReadString(clientNameLength);
+	//}
+	//else if (messageType == 1) {
+	//	uint32_t messageLength = buffer.ReadUInt32_LE();
+	//	std::string messageString = buffer.ReadString(messageLength);
+	//}
+}
+
+
+//void cClient::ReceiveMessage(SOCKET socket)
+//{
+//
+//	const int bufSize = 512;
+//	cBuffer buffer(bufSize);
+//	char recvbuf[bufSize];
+//	int result;
+//
+//	while (true)
+//	{
+//		// Clear the buffer before receiving new data
+//		ZeroMemory(recvbuf, bufSize);
+//
+//		// Receive data from the socket
+//		result = recv(socket, recvbuf, bufSize, 0);
+//
+//		if (result > 0)
+//		{
+//			// Data was received, now store it in the buffer
+//			buffer.m_BufferData.assign(recvbuf, recvbuf + result);
+//
+//			// Read the packet size and message type
+//			uint16_t packetSize = buffer.ReadUShort16_LE();
+//			uint16_t messageType = buffer.ReadUShort16_LE();
+//
+//			// Process the message based on message type
+//			if (messageType == 1)
+//			{
+//				// Message contains text
+//				uint32_t messageLength = buffer.ReadUInt32_LE();
+//				std::string messageString = buffer.ReadString(messageLength);
+//
+//				std::cout << "Message: " << messageString << std::endl;
+//			}
+//			else if (messageType == 2)
+//			{
+//				// Message contains a client name
+//				uint32_t clientNameLength = buffer.ReadUInt32_LE();
+//				std::string clientNameString = buffer.ReadString(clientNameLength);
+//
+//				std::cout << "Client Name: " << clientNameString << std::endl;
+//			}
+//		}
+//		else if (result == 0)
+//		{
+//			std::cout << "Server closed the connection." << std::endl;
+//			break;
+//		}
+//		else
+//		{
+//			std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+//			break;
+//		}
+//
+//		// Add a small delay to avoid high CPU usage in case of no incoming data
+//		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//	}
+//}

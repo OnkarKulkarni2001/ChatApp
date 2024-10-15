@@ -21,8 +21,3 @@ struct sMessage
 	uint32_t messageLength;
 	std::string messageString;
 };
-
-
-struct addrinfo* sInfo = nullptr;
-
-struct addrinfo sHints;
