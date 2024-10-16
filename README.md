@@ -124,6 +124,7 @@ MessageType:1
 MessageLength:12
 
 Message:[UserName1]: [Message from UserName1]
+```
 
 Step 12) If [UserName1] and [UserName2] sends several messages it would look like this in ChatAppClient.exe of [UserName2]
 
