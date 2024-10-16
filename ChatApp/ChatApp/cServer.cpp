@@ -105,31 +105,14 @@ int cServer::initializeServer(SOCKET& listenSocket) {
 // Function to handle new connections
 void cServer::handleNewConnections(SOCKET listenSocket) {
     SOCKET newConnection = accept(listenSocket, NULL, NULL);
-    if (newConnection == INVALID_SOCKET) {
-        std::cout << "Accept failed with error: " << WSAGetLastError() << std::endl;
-    }
-    else {
-        u_long mode = 1;
-        int result = ioctlsocket(newConnection, FIONBIO, &mode);
-        if (result != NO_ERROR) {
-            std::cout << "Failed to set non-blocking mode for client: " << WSAGetLastError() << std::endl;
-            closesocket(newConnection);
-        }
-        else {
-            vConnections.push_back(newConnection);
-            std::cout << "New client connected to socket: " << (int)newConnection << std::endl;
 
-            // Broadcast to all clients
-            std::string welcomeMessage = "A new client has joined the room.\n";
-            //broadcastMessage(welcomeMessage);
-        }
-    }
+    vConnections.push_back(newConnection);
 }
 
 
 // Function to handle client messages
 void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vector<SOCKET> vConnections) {
-    const int bufSize = 512;
+    int bufSize = 4096;
     cBuffer buffer(bufSize);
 
     int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
@@ -138,33 +121,35 @@ void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vec
         closesocket(socket);
         vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), socket), vConnections.end()); 
     }
-    else if (result == SOCKET_ERROR) {
-        if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
-            closesocket(socket);
-            vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), socket), vConnections.end());
-        }
-    }
     else {
         // Process received data
         uint16_t packetSize = buffer.ReadUShort16_LE();
         uint16_t messageType = buffer.ReadUShort16_LE();
-        buffer.GrowBuffer(packetSize);
         if (messageType == 2) {
             uint32_t clientNameLength = buffer.ReadUInt32_LE();
             std::string clientNameString = buffer.ReadString(clientNameLength);
             ConnectionWithName[socket] = clientNameString;
-            std::cout << ConnectionWithName[socket] << " has joined the room." << std::endl;
-
+            std::cout << "------------ " << ConnectionWithName[socket] << " has joined the room. ------------" << std::endl;
+            std::string broadcastMessageString = "------------ " + ConnectionWithName[socket] + " has joined the room. ------------";
             send(socket, clientNameString.c_str(), clientNameLength, 0);
-
+            send(socket, broadcastMessageString.c_str(), broadcastMessageString.length(), 0);
             //broadcastMessage(ConnectionWithName[socket] + " has joined the room.\n");
         }
         if (messageType == 1) {
+            buffer.GrowBuffer(packetSize, buffer);
             uint32_t messageLength = buffer.ReadUInt32_LE();
             std::string messageString = buffer.ReadString(messageLength);
 
-            std::cout << messageString.c_str() << std::endl;
+            if (messageString.find(ConnectionWithName[socket] + " has disconnected!") != std::string::npos)
+            {
+                //std::cout << "Client disconnected!" << std::endl;
+                messageString = "------------ " + ConnectionWithName[socket] + " disconnected! ------------";
+                closesocket(socket);
+                vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), socket), vConnections.end());
+            }
+            //std::cout << messageString.c_str() << std::endl;
+
+            printf("PacketSize:%d\nMessageType:%d\nMessageLength:%d\nMessage:%s\n", packetSize, messageType, messageLength, messageString.c_str());
             // Prepare message for broadcasting
             //std::string fullMessage = ConnectionWithName[socket] + ": " + messageString;
             

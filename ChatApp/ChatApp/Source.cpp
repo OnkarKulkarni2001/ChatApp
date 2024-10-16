@@ -39,10 +39,10 @@ int main(int arg, char* argv[]) {
         }
 
         int count = select(0, &socketsReadyForReading, NULL, NULL, &tv);
-        if (count == SOCKET_ERROR) {
-            std::cout << "Select failed with error: " << WSAGetLastError() << std::endl;
+        /*if (count == SOCKET_ERROR) {
+            std::cout << "Select failed with error or the Client disconnected!: " << WSAGetLastError() << std::endl;
             break;
-        }
+        }*/
 
         if (FD_ISSET(listenSocket, &socketsReadyForReading)) {
             server.handleNewConnections(listenSocket);

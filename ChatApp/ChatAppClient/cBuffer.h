@@ -12,7 +12,7 @@ public:
 	cBuffer(int N);
 	~cBuffer();
 
-	void GrowBuffer(int additionalBytes);
+	void GrowBuffer(int additionalBytes, cBuffer& buffer);
 
 	void WriteUInt32_LE(uint32_t value);
 	uint32_t ReadUInt32_LE();

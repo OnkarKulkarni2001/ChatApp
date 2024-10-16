@@ -66,7 +66,7 @@ int main(int arg, char* argv[])
     }
 
     std::cout << "Conected to room as " << client.clientName << "...\n";
-    std::cout << "Type '/exit' to leave the chat.\n";
+    std::cout << "Type '/quit' to leave the chat.\n";
 
     // Send client name to server
     result = client.SendClientNameToServer(serverSocket, client.clientName);
