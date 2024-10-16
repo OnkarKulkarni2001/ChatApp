@@ -13,24 +13,9 @@
 #include <map>
 #include "cServer.h"
 
-
 #pragma comment(lib, "Ws2_32.lib")			// linking Ws2_32.lib library
 
 #define DEFAULT_PORT "8412"					// Setting default port
-
-
-//void cServer::broadcastMessage(const std::string& message) {
-//    for (SOCKET clientSocket : vConnections) {
-//        int result = send(clientSocket, message.c_str(), message.size(), 0);
-//        if (result == SOCKET_ERROR) {
-//            std::cout << "Failed to send message to client: " << WSAGetLastError() << std::endl;
-//            // Handle disconnection of this client by removing from `vConnections`
-//            closesocket(clientSocket);
-//            vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), clientSocket), vConnections.end());
-//        }
-//    }
-//}
-
 
 // Function to initialize the server
 int cServer::initializeServer(SOCKET& listenSocket) {
@@ -105,7 +90,6 @@ int cServer::initializeServer(SOCKET& listenSocket) {
 // Function to handle new connections
 void cServer::handleNewConnections(SOCKET listenSocket) {
     SOCKET newConnection = accept(listenSocket, NULL, NULL);
-
     vConnections.push_back(newConnection);
 }
 
@@ -130,10 +114,15 @@ void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vec
             std::string clientNameString = buffer.ReadString(clientNameLength);
             ConnectionWithName[socket] = clientNameString;
             std::cout << "------------ " << ConnectionWithName[socket] << " has joined the room. ------------" << std::endl;
-            std::string broadcastMessageString = "------------ " + ConnectionWithName[socket] + " has joined the room. ------------";
-            send(socket, clientNameString.c_str(), clientNameLength, 0);
-            send(socket, broadcastMessageString.c_str(), broadcastMessageString.length(), 0);
-            //broadcastMessage(ConnectionWithName[socket] + " has joined the room.\n");
+            for (int j = 0; j < vConnections.size(); j++)
+            {
+                SOCKET outSocket = vConnections[j];
+
+                if (outSocket != listenSocket && outSocket != socket)
+                {
+                    send(outSocket, (const char*)(&buffer.m_BufferData[0]), packetSize, 0);
+                }
+            }
         }
         if (messageType == 1) {
             buffer.GrowBuffer(packetSize, buffer);
@@ -142,24 +131,14 @@ void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vec
 
             if (messageString.find(ConnectionWithName[socket] + " has disconnected!") != std::string::npos)
             {
-                //std::cout << "Client disconnected!" << std::endl;
                 messageString = "------------ " + ConnectionWithName[socket] + " disconnected! ------------";
                 closesocket(socket);
                 vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), socket), vConnections.end());
             }
-            //std::cout << messageString.c_str() << std::endl;
 
             printf("PacketSize:%d\nMessageType:%d\nMessageLength:%d\nMessage:%s\n", packetSize, messageType, messageLength, messageString.c_str());
-            // Prepare message for broadcasting
-            //std::string fullMessage = ConnectionWithName[socket] + ": " + messageString;
             
-
-            // Broadcast to all clients except the sender
-            /*for (SOCKET clientSocket : vConnections) {
-                if (clientSocket != socket) {
-                    send(clientSocket, fullMessage.c_str(), fullMessage.size(), 0);
-                }
-            }*/
+            // Prepare message for broadcasting
             for (int j = 0; j < vConnections.size(); j++)
             {
                 SOCKET outSocket = vConnections[j];
