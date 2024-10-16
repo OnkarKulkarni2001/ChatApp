@@ -65,7 +65,7 @@ int main(int arg, char* argv[])
         return 1;
     }
 
-    std::cout << "Conected to room as " << client.clientName << "...\n";
+    std::cout << "Connected to room as " << client.clientName << "...\n";
     std::cout << "Type '/quit' to leave the chat.\n";
 
     // Send client name to server
