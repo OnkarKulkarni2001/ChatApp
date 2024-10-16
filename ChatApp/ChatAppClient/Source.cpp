@@ -69,7 +69,7 @@ int main(int arg, char* argv[])
     std::cout << "Type '/exit' to leave the chat.\n";
 
     // Send client name to server
-    /*result = client.SendClientNameToServer(serverSocket, client.clientName);
+    result = client.SendClientNameToServer(serverSocket, client.clientName);
     if (result == SOCKET_ERROR)
     {
         std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
@@ -77,7 +77,7 @@ int main(int arg, char* argv[])
         freeaddrinfo(sInfo);
         WSACleanup();
         return 1;
-    }*/
+    }
 
     // Start threads for sending and receiving messages
     std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);

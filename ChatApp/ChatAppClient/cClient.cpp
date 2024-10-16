@@ -17,7 +17,6 @@ int cClient::SendMessageToServer(SOCKET socket, std::string& clientName)
 	while (isRunningReceive)
 	{
 		sMessage chatMessage;
-		//std::cout << "Type a message: ";
 		std::getline(std::cin, chatMessage.messageString);
 		chatMessage.messageString = clientName + ": " + chatMessage.messageString;
 		if (chatMessage.messageString == "/exit")
@@ -29,14 +28,14 @@ int cClient::SendMessageToServer(SOCKET socket, std::string& clientName)
 		chatMessage.messageLength = chatMessage.messageString.length();
 		chatMessage.packetHeader.messageType = 1;
 		chatMessage.packetHeader.packetSize =
-			+chatMessage.messageString.length()
+			+ chatMessage.messageString.length()
 			+ sizeof(chatMessage.messageLength)
 			+ sizeof(chatMessage.packetHeader.messageType)
 			+ sizeof(chatMessage.packetHeader.packetSize);
 
 		uint32_t bufSize = 512;
 		cBuffer buffer(bufSize);
-
+		buffer.GrowBuffer(chatMessage.packetHeader.packetSize);
 		buffer.WriteUShort16_LE(chatMessage.packetHeader.packetSize);
 		buffer.WriteUShort16_LE(chatMessage.packetHeader.messageType);
 		buffer.WriteUInt32_LE(chatMessage.messageLength);
@@ -53,34 +52,34 @@ int cClient::SendMessageToServer(SOCKET socket, std::string& clientName)
 	return result;
 }
 
-//int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
-//{
-//	sMessage passClientName;
-//	passClientName.messageString = clientName;
-//	passClientName.messageLength = passClientName.messageString.length();
-//	passClientName.packetHeader.messageType = 2;
-//	passClientName.packetHeader.packetSize =
-//		+passClientName.messageString.length()
-//		+ sizeof(passClientName.messageLength)
-//		+ sizeof(passClientName.packetHeader.messageType)
-//		+ sizeof(passClientName.packetHeader.packetSize);
-//
-//	uint32_t bufSize = 512;
-//	cBuffer buffer(bufSize);
-//
-//	buffer.WriteUShort16_LE(passClientName.packetHeader.packetSize);
-//	buffer.WriteUShort16_LE(passClientName.packetHeader.messageType);
-//	buffer.WriteUInt32_LE(passClientName.messageLength);
-//	buffer.WriteString(passClientName.messageString);
-//
-//	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), passClientName.packetHeader.packetSize, 0);
-//	if (result == SOCKET_ERROR)
-//	{
-//		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-//		return SOCKET_ERROR;
-//	}
-//	return result;
-//}
+int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
+{
+	sMessage passClientName;
+	passClientName.messageString = clientName;
+	passClientName.messageLength = passClientName.messageString.length();
+	passClientName.packetHeader.messageType = 2;
+	passClientName.packetHeader.packetSize =
+		+ passClientName.messageString.length()
+		+ sizeof(passClientName.messageLength)
+		+ sizeof(passClientName.packetHeader.messageType)
+		+ sizeof(passClientName.packetHeader.packetSize);
+
+	uint32_t bufSize = 512;
+	cBuffer buffer(bufSize);
+	buffer.GrowBuffer(passClientName.packetHeader.packetSize);
+	buffer.WriteUShort16_LE(passClientName.packetHeader.packetSize);
+	buffer.WriteUShort16_LE(passClientName.packetHeader.messageType);
+	buffer.WriteUInt32_LE(passClientName.messageLength);
+	buffer.WriteString(passClientName.messageString);
+
+	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), passClientName.packetHeader.packetSize, 0);
+	if (result == SOCKET_ERROR)
+	{
+		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+		return SOCKET_ERROR;
+	}
+	return result;
+}
 
 void cClient::ReceiveMessage(SOCKET socket)
 {
@@ -121,7 +120,7 @@ void cClient::ReceiveMessage(SOCKET socket)
 		{
 			uint32_t packetSize = buffer.ReadUShort16_LE();
 			uint32_t messageType = buffer.ReadUShort16_LE();
-
+			buffer.GrowBuffer(packetSize);
 			if (messageType == 1)
 			{
 				// handle the message
@@ -141,8 +140,6 @@ void cClient::ReceiveMessage(SOCKET socket)
 			break;
 		}
 	}
-	std::cout << "Type a message: ";
-
 }
 
 

@@ -13,13 +13,12 @@ void cBuffer::GrowBuffer(int additionalBytes)
 {
 	if (m_WriteIndex + additionalBytes > m_BufferData.size())
 	{
-		m_BufferData.resize(m_BufferData.size() * 2);
+		m_BufferData.resize(m_BufferData.size() * additionalBytes);
 	}
 }
 
 void cBuffer::WriteUInt32_LE(uint32_t value)					// Serializing/Writing the 32 bit integer by 
-{	
-	GrowBuffer(4);													// breaking it into individual bytes and stored 
+{														// breaking it into individual bytes and stored 
 	m_BufferData[m_WriteIndex++] = value;							// in LE order in buffer
 	m_BufferData[m_WriteIndex++] = value >> 8;
 	m_BufferData[m_WriteIndex++] = value >> 16;
@@ -38,8 +37,7 @@ uint32_t cBuffer::ReadUInt32_LE()									// Deserializing/Reading the individua
 }
 
 void cBuffer::WriteUShort16_LE(uint16_t value)					// Serializing/Writing the 16 bit short by 
-{				
-	GrowBuffer(2);													// breaking it into individual bytes and stored 
+{																	// breaking it into individual bytes and stored 
 	m_BufferData[m_WriteIndex++] = value;							// in LE order in buffer
 	m_BufferData[m_WriteIndex++] = value >> 8;
 }
@@ -54,8 +52,7 @@ uint16_t cBuffer::ReadUShort16_LE()									// Deserializing/Reading the individ
 }
 
 void cBuffer::WriteString(const std::string& stringToWrite)	// Writes a given string by retrieving length of 	
-{	
-	GrowBuffer(4);													// given string after that copying value of string 
+{														// given string after that copying value of string 
 	int stringLength = stringToWrite.length();						// letter by letter while incrementing write index
 	for (int i = 0; i < stringLength; i++)							// buffer
 	{

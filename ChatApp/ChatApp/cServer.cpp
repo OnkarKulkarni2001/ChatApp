@@ -19,17 +19,17 @@
 #define DEFAULT_PORT "8412"					// Setting default port
 
 
-void cServer::broadcastMessage(const std::string& message) {
-    for (SOCKET clientSocket : vConnections) {
-        int result = send(clientSocket, message.c_str(), message.size(), 0);
-        if (result == SOCKET_ERROR) {
-            std::cout << "Failed to send message to client: " << WSAGetLastError() << std::endl;
-            // Handle disconnection of this client by removing from `vConnections`
-            closesocket(clientSocket);
-            vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), clientSocket), vConnections.end());
-        }
-    }
-}
+//void cServer::broadcastMessage(const std::string& message) {
+//    for (SOCKET clientSocket : vConnections) {
+//        int result = send(clientSocket, message.c_str(), message.size(), 0);
+//        if (result == SOCKET_ERROR) {
+//            std::cout << "Failed to send message to client: " << WSAGetLastError() << std::endl;
+//            // Handle disconnection of this client by removing from `vConnections`
+//            closesocket(clientSocket);
+//            vConnections.erase(std::remove(vConnections.begin(), vConnections.end(), clientSocket), vConnections.end());
+//        }
+//    }
+//}
 
 
 // Function to initialize the server
@@ -117,13 +117,11 @@ void cServer::handleNewConnections(SOCKET listenSocket) {
         }
         else {
             vConnections.push_back(newConnection);
-            sClient client;  // Create a client instance
-            ConnectionWithName[newConnection] = client.clientName;
-            std::cout << "New client connected!" << std::endl;
+            std::cout << "New client connected to socket: " << (int)newConnection << std::endl;
 
             // Broadcast to all clients
             std::string welcomeMessage = "A new client has joined the room.\n";
-            broadcastMessage(welcomeMessage);
+            //broadcastMessage(welcomeMessage);
         }
     }
 }
@@ -151,8 +149,8 @@ void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vec
         // Process received data
         uint16_t packetSize = buffer.ReadUShort16_LE();
         uint16_t messageType = buffer.ReadUShort16_LE();
-
-       /* if (messageType == 2) {
+        buffer.GrowBuffer(packetSize);
+        if (messageType == 2) {
             uint32_t clientNameLength = buffer.ReadUInt32_LE();
             std::string clientNameString = buffer.ReadString(clientNameLength);
             ConnectionWithName[socket] = clientNameString;
@@ -160,16 +158,16 @@ void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vec
 
             send(socket, clientNameString.c_str(), clientNameLength, 0);
 
-            broadcastMessage(ConnectionWithName[socket] + " has joined the room.\n");
-        }*/
+            //broadcastMessage(ConnectionWithName[socket] + " has joined the room.\n");
+        }
         if (messageType == 1) {
             uint32_t messageLength = buffer.ReadUInt32_LE();
             std::string messageString = buffer.ReadString(messageLength);
 
-            //std::cout << ConnectionWithName[socket] << ": " << messageString.c_str() << std::endl;
-
+            std::cout << messageString.c_str() << std::endl;
             // Prepare message for broadcasting
-            std::string fullMessage = ConnectionWithName[socket] + ": " + messageString;
+            //std::string fullMessage = ConnectionWithName[socket] + ": " + messageString;
+            
 
             // Broadcast to all clients except the sender
             /*for (SOCKET clientSocket : vConnections) {
