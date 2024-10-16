@@ -130,7 +130,7 @@ void cServer::handleNewConnections(SOCKET listenSocket) {
 
 
 // Function to handle client messages
-void cServer::handleClientMessages(SOCKET socket) {
+void cServer::handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vector<SOCKET> vConnections) {
     const int bufSize = 512;
     cBuffer buffer(bufSize);
 
@@ -152,7 +152,7 @@ void cServer::handleClientMessages(SOCKET socket) {
         uint16_t packetSize = buffer.ReadUShort16_LE();
         uint16_t messageType = buffer.ReadUShort16_LE();
 
-        if (messageType == 2) {
+       /* if (messageType == 2) {
             uint32_t clientNameLength = buffer.ReadUInt32_LE();
             std::string clientNameString = buffer.ReadString(clientNameLength);
             ConnectionWithName[socket] = clientNameString;
@@ -161,20 +161,29 @@ void cServer::handleClientMessages(SOCKET socket) {
             send(socket, clientNameString.c_str(), clientNameLength, 0);
 
             broadcastMessage(ConnectionWithName[socket] + " has joined the room.\n");
-        }
-        else if (messageType == 1) {
+        }*/
+        if (messageType == 1) {
             uint32_t messageLength = buffer.ReadUInt32_LE();
             std::string messageString = buffer.ReadString(messageLength);
 
-            std::cout << ConnectionWithName[socket] << ": " << messageString.c_str() << std::endl;
+            //std::cout << ConnectionWithName[socket] << ": " << messageString.c_str() << std::endl;
 
             // Prepare message for broadcasting
             std::string fullMessage = ConnectionWithName[socket] + ": " + messageString;
 
             // Broadcast to all clients except the sender
-            for (SOCKET clientSocket : vConnections) {
+            /*for (SOCKET clientSocket : vConnections) {
                 if (clientSocket != socket) {
                     send(clientSocket, fullMessage.c_str(), fullMessage.size(), 0);
+                }
+            }*/
+            for (int j = 0; j < vConnections.size(); j++)
+            {
+                SOCKET outSocket = vConnections[j];
+
+                if (outSocket != listenSocket && outSocket != socket)
+                {
+                    send(outSocket, (const char*)(&buffer.m_BufferData[0]), packetSize, 0);
                 }
             }
         }

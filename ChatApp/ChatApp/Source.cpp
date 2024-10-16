@@ -50,7 +50,7 @@ int main(int arg, char* argv[]) {
 
         for (SOCKET socket : server.vConnections) {
             if (FD_ISSET(socket, &socketsReadyForReading)) {
-                server.handleClientMessages(socket);
+                server.handleClientMessages(socket, listenSocket, server.vConnections);
             }
         }
     }

@@ -13,7 +13,7 @@ public:
 
 	void broadcastMessage(const std::string& message);
 	void handleNewConnections(SOCKET listenSocket);
-	void handleClientMessages(SOCKET socket);
+	void handleClientMessages(SOCKET socket, SOCKET& listenSocket, std::vector<SOCKET> vConnections);
 		
 	int initializeServer(SOCKET& listenSocket);
 };

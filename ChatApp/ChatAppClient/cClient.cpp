@@ -9,72 +9,86 @@
 #include <thread>
 #pragma comment(lib, "Ws2_32.lib")
 
-int cClient::SendMessageToServer(SOCKET socket)
+std::atomic<bool> isRunningReceive(true);
+
+int cClient::SendMessageToServer(SOCKET socket, std::string& clientName)
 {
-	sMessage chatMessage;
-	std::cout << "Type a message: ";
-	std::getline(std::cin, chatMessage.messageString);
-	chatMessage.messageLength = chatMessage.messageString.length();
-	chatMessage.packetHeader.messageType = 1;
-	chatMessage.packetHeader.packetSize =
-		+ chatMessage.messageString.length()
-		+ sizeof(chatMessage.messageLength)
-		+ sizeof(chatMessage.packetHeader.messageType)
-		+ sizeof(chatMessage.packetHeader.packetSize);
-
-	uint32_t bufSize = 512;
-	cBuffer buffer(bufSize);
-
-	buffer.WriteUShort16_LE(chatMessage.packetHeader.packetSize);
-	buffer.WriteUShort16_LE(chatMessage.packetHeader.messageType);
-	buffer.WriteUInt32_LE(chatMessage.messageLength);
-	buffer.WriteString(chatMessage.messageString);
-
-	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), chatMessage.packetHeader.packetSize, 0);
-	if (result == SOCKET_ERROR)
+	int result = 0;
+	while (isRunningReceive)
 	{
-		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-		return SOCKET_ERROR;
+		sMessage chatMessage;
+		//std::cout << "Type a message: ";
+		std::getline(std::cin, chatMessage.messageString);
+		chatMessage.messageString = clientName + ": " + chatMessage.messageString;
+		if (chatMessage.messageString == "/exit")
+		{
+			std::cout << "Exiting the chat..\n";
+			isRunningReceive.store(false, std::memory_order_relaxed);
+			break;
+		}
+		chatMessage.messageLength = chatMessage.messageString.length();
+		chatMessage.packetHeader.messageType = 1;
+		chatMessage.packetHeader.packetSize =
+			+chatMessage.messageString.length()
+			+ sizeof(chatMessage.messageLength)
+			+ sizeof(chatMessage.packetHeader.messageType)
+			+ sizeof(chatMessage.packetHeader.packetSize);
+
+		uint32_t bufSize = 512;
+		cBuffer buffer(bufSize);
+
+		buffer.WriteUShort16_LE(chatMessage.packetHeader.packetSize);
+		buffer.WriteUShort16_LE(chatMessage.packetHeader.messageType);
+		buffer.WriteUInt32_LE(chatMessage.messageLength);
+		buffer.WriteString(chatMessage.messageString);
+		
+		result = send(socket, (const char*)(&buffer.m_BufferData[0]), chatMessage.packetHeader.packetSize, 0);
+		if (result == SOCKET_ERROR)
+		{
+			std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+			return SOCKET_ERROR;
+		}
 	}
+	
 	return result;
 }
 
-int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
-{
-	sMessage passClientName;
-	passClientName.messageString = clientName;
-	passClientName.messageLength = passClientName.messageString.length();
-	passClientName.packetHeader.messageType = 2;
-	passClientName.packetHeader.packetSize =
-		+passClientName.messageString.length()
-		+ sizeof(passClientName.messageLength)
-		+ sizeof(passClientName.packetHeader.messageType)
-		+ sizeof(passClientName.packetHeader.packetSize);
-
-	uint32_t bufSize = 512;
-	cBuffer buffer(bufSize);
-
-	buffer.WriteUShort16_LE(passClientName.packetHeader.packetSize);
-	buffer.WriteUShort16_LE(passClientName.packetHeader.messageType);
-	buffer.WriteUInt32_LE(passClientName.messageLength);
-	buffer.WriteString(passClientName.messageString);
-
-	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), passClientName.packetHeader.packetSize, 0);
-	if (result == SOCKET_ERROR)
-	{
-		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
-		return SOCKET_ERROR;
-	}
-	return result;
-}
+//int cClient::SendClientNameToServer(SOCKET socket, std::string& clientName)
+//{
+//	sMessage passClientName;
+//	passClientName.messageString = clientName;
+//	passClientName.messageLength = passClientName.messageString.length();
+//	passClientName.packetHeader.messageType = 2;
+//	passClientName.packetHeader.packetSize =
+//		+passClientName.messageString.length()
+//		+ sizeof(passClientName.messageLength)
+//		+ sizeof(passClientName.packetHeader.messageType)
+//		+ sizeof(passClientName.packetHeader.packetSize);
+//
+//	uint32_t bufSize = 512;
+//	cBuffer buffer(bufSize);
+//
+//	buffer.WriteUShort16_LE(passClientName.packetHeader.packetSize);
+//	buffer.WriteUShort16_LE(passClientName.packetHeader.messageType);
+//	buffer.WriteUInt32_LE(passClientName.messageLength);
+//	buffer.WriteString(passClientName.messageString);
+//
+//	int result = send(socket, (const char*)(&buffer.m_BufferData[0]), passClientName.packetHeader.packetSize, 0);
+//	if (result == SOCKET_ERROR)
+//	{
+//		std::cout << "send failed with error: " << WSAGetLastError() << std::endl;
+//		return SOCKET_ERROR;
+//	}
+//	return result;
+//}
 
 void cClient::ReceiveMessage(SOCKET socket)
 {
-	uint32_t bufSize = 512;
-	cBuffer buffer(bufSize);
-
-	while (true)
+	/*while (true)
 	{
+		uint32_t bufSize = 512;
+		cBuffer buffer(bufSize);
+
 		int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
 		if (result == 0)
 		{
@@ -86,8 +100,8 @@ void cClient::ReceiveMessage(SOCKET socket)
 			std::cout << "recv failed with an error: " << WSAGetLastError() << std::endl;
 			break;
 		}
-		uint16_t packetSize = buffer.ReadUInt32_LE();
-		uint16_t messageType = buffer.ReadUInt32_LE();
+		uint16_t packetSize = buffer.ReadUShort16_LE();
+		uint16_t messageType = buffer.ReadUShort16_LE();
 
 		if (messageType == 1)
 		{
@@ -96,22 +110,39 @@ void cClient::ReceiveMessage(SOCKET socket)
 
 			std::cout << "Message: " << messageString << std::endl;
 		}
+	}*/
+
+	while (isRunningReceive.load(std::memory_order_relaxed))
+	{
+		const int bufSize = 512;
+		cBuffer buffer(bufSize);
+		int result = recv(socket, (char*)(&buffer.m_BufferData[0]), bufSize, 0);
+		if (result > 0)
+		{
+			uint32_t packetSize = buffer.ReadUShort16_LE();
+			uint32_t messageType = buffer.ReadUShort16_LE();
+
+			if (messageType == 1)
+			{
+				// handle the message
+				uint32_t messageLength = buffer.ReadUInt32_LE();
+				std::string msg = buffer.ReadString(messageLength);
+
+				std::cout << msg << "\n";
+			}
+		}
+		else if (result == 0)
+		{
+			std::cout << "Server closed the connection.\n";
+			break;
+		}
+		else {
+			printf("recv failed with error %d\n", WSAGetLastError());
+			break;
+		}
 	}
+	std::cout << "Type a message: ";
 
-	//// Process received data
-	//const int bufSize = 512;
-	//cBuffer buffer(bufSize);
-	//uint16_t packetSize = buffer.ReadUShort16_LE();
-	//uint16_t messageType = buffer.ReadUShort16_LE();
-
-	//if (messageType == 2) {
-	//	uint32_t clientNameLength = buffer.ReadUInt32_LE();
-	//	std::string clientNameString = buffer.ReadString(clientNameLength);
-	//}
-	//else if (messageType == 1) {
-	//	uint32_t messageLength = buffer.ReadUInt32_LE();
-	//	std::string messageString = buffer.ReadString(messageLength);
-	//}
 }
 
 

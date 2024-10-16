@@ -11,6 +11,6 @@ public:
 	std::string clientName;
 
 	void ReceiveMessage(SOCKET socket);
-	int SendMessageToServer(SOCKET socket);
-	int SendClientNameToServer(SOCKET socket, std::string& clientName);
+	int SendMessageToServer(SOCKET socket, std::string& clientName);
+	//int SendClientNameToServer(SOCKET socket, std::string& clientName);
 };

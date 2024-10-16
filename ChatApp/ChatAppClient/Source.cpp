@@ -10,6 +10,8 @@
 
 #define DEFAULT_PORT "8412"
 
+std::atomic<bool> isRunning(true);
+
 int main(int arg, char* argv[])
 {
     WSADATA wsaData;
@@ -48,6 +50,10 @@ int main(int arg, char* argv[])
         return 1;
     }
 
+    cClient client;
+    std::cout << "Enter your name: ";
+    std::getline(std::cin, client.clientName);
+    
     // Connecting the serverSocket!
     result = connect(serverSocket, sInfo->ai_addr, (int)sInfo->ai_addrlen);
     if (result == SOCKET_ERROR)
@@ -59,12 +65,25 @@ int main(int arg, char* argv[])
         return 1;
     }
 
-    cClient client;
-    std::cout << "Enter your name: ";
-    std::getline(std::cin, client.clientName);
+    std::cout << "Conected to room as " << client.clientName << "...\n";
+    std::cout << "Type '/exit' to leave the chat.\n";
 
     // Send client name to server
-    result = client.SendClientNameToServer(serverSocket, client.clientName);
+    /*result = client.SendClientNameToServer(serverSocket, client.clientName);
+    if (result == SOCKET_ERROR)
+    {
+        std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
+        closesocket(serverSocket);
+        freeaddrinfo(sInfo);
+        WSACleanup();
+        return 1;
+    }*/
+
+    // Start threads for sending and receiving messages
+    std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
+
+    // Sending messages to the server in the main thread
+    result = client.SendMessageToServer(serverSocket, client.clientName);
     if (result == SOCKET_ERROR)
     {
         std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
@@ -73,26 +92,10 @@ int main(int arg, char* argv[])
         WSACleanup();
         return 1;
     }
+    
+    receiveThread.join(); // Ensure that the receive thread finishes before cleanup
 
-    // Start threads for sending and receiving messages
-    std::thread receiveThread(&cClient::ReceiveMessage, &client, serverSocket);
-
-    // Sending messages to the server in the main thread
-    while (true)
-    {
-        result = client.SendMessageToServer(serverSocket);
-        if (result == SOCKET_ERROR)
-        {
-            std::cout << "send failed with an error: " << WSAGetLastError() << std::endl;
-            closesocket(serverSocket);
-            freeaddrinfo(sInfo);
-            WSACleanup();
-            return 1;
-        }
-    }
-
-    //receiveThread.join(); // Ensure that the receive thread finishes before cleanup
-
+    shutdown(serverSocket, SD_BOTH);
     closesocket(serverSocket);
     freeaddrinfo(sInfo);
     WSACleanup();
